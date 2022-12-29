@@ -1,1 +1,1 @@
-export { leagueOverlay } from "./leagueOverlay";
+export { LeagueOverlay } from "./leagueOverlay";

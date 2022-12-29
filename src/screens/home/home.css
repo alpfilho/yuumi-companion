@@ -1,0 +1,26 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.home-button {
+  background-color: #23272e;
+  border: none;
+  padding: 1rem;
+  font-size: 2em;
+  font-weight: 900;
+  color: #a972d6;
+  cursor: pointer;
+  margin: 1rem;
+}
