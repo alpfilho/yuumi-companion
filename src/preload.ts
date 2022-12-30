@@ -1,6 +1,5 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge } from "electron";
+import { app } from "./modules/app";
 
 contextBridge.exposeInMainWorld("yuumiCompanion", {
   start: () => {
@@ -20,11 +19,4 @@ contextBridge.exposeInMainWorld("player", {
   },
 });
 
-contextBridge.exposeInMainWorld("channel", {
-  on: (event: string, callback: () => void) => {
-    ipcRenderer.on(event, callback);
-  },
-  send: (event: string) => {
-    ipcRenderer.send(event);
-  },
-});
+contextBridge.exposeInMainWorld("app", app);

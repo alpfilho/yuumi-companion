@@ -1,6 +1,13 @@
 :root {
   --background: #1e2227;
+  --background2: #23272e;
   --text: #abb2bf;
+  --success: #73bc64;
+  --danger: #db3c43;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -14,4 +21,21 @@ body {
 
   display: flex;
   flex-direction: column;
+
+  min-height: 100vh;
+}
+
+.app-root {
+  height: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.app-body {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

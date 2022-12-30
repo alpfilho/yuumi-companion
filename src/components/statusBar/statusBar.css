@@ -1,6 +1,15 @@
 .status-bar {
   width: 100%;
-  background-color: green;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+  background-color: var(--background2);
+  color: var(--success);
+  font-family: monospace;
+  padding: 0.5rem 1rem;
+}
+
+.not-initiated {
+  color: var(--danger);
+}
+
+.initiated {
+  color: var(--success);
 }

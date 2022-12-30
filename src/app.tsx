@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useAtom } from "jotai";
+import React, { useEffect } from "react";
+import { leagueClientStatusAtom } from "./app.atoms";
 // import { useAtomValue } from "jotai";
 
 // import { selectedRoleAtom } from "./app.atoms";
@@ -7,51 +9,29 @@ import React, { useEffect, useState } from "react";
 // import { Home } from "./screens/home";
 import { StatusBar } from "./components/statusBar";
 
+import type { ClientStatus } from "./modules/leagueClient";
+
+const { app } = window;
+
 export const App = () => {
-  const [credentials, setCredentials] = useState<{
-    address: string;
-    port: number;
-    username: string;
-    password: string;
-    protocol: string;
-  }>(null);
+  const [clientStatus, setClientStatus] = useAtom(leagueClientStatusAtom);
 
+  /**
+   * On Init
+   */
   useEffect(() => {
-    window.channel.on("league-client-credentials", (event, credentials) => {
-      console.log(credentials);
-      setCredentials(credentials);
+    app.on("league-client-status", (_event, status: ClientStatus) => {
+      setClientStatus(status);
     });
-    window.channel.send("front-end-ready");
+    app.send("front-end-ready");
   }, []);
-
-  useEffect(() => {
-    console.log(credentials);
-  }, [credentials]);
 
   return (
     <>
-      <button
-        onClick={() => {
-          console.log("goiaba");
-          const url = `${credentials.protocol}://${credentials.address}:${credentials.port}/lol-champ-select/v1/session`;
-          console.log("url", url);
-          fetch(url, {
-            headers: {
-              Authorization: `Basic ${btoa(
-                credentials.username + ":" + credentials.password
-              )}`,
-            },
-            mode: "cors",
-          }).then((data) => {
-            data.json().then((data) => {
-              console.log(data);
-            });
-          });
-        }}
-      >
-        Goiaba
-      </button>
-      <StatusBar />
+      <div className="app-body">
+        {clientStatus === "notOpen" && <h1>Aguardando Jogo Iniciar</h1>}
+      </div>
+      <StatusBar clientStatus={clientStatus} />
     </>
   );
 };

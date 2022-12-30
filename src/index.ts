@@ -1,10 +1,12 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import LCUConnector from "lcu-connector";
+import { LeagueClientController } from "./modules/leagueClient";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 const leagueConnector = new LCUConnector();
+const leagueClient = new LeagueClientController();
 
 if (require("electron-squirrel-startup")) {
   app.quit();
@@ -24,18 +26,18 @@ app.whenReady().then(() => {
     height: 448,
     title: "Yuumi Companion",
     resizable: false,
-    frame: false,
+    frame: true,
+    movable: true,
     webPreferences: {
-      nodeIntegration: true,
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
 
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  mainWindow.webContents.openDevTools();
 
   const sendCredentials = (credentials: Credentials) => {
-    mainWindow.webContents.send("league-client-credentials", credentials);
+    console.log("send-credentials");
+    ipcMain.emit("league-client-credentials", credentials);
   };
 
   leagueConnector.on("connect", sendCredentials);
@@ -43,5 +45,18 @@ app.whenReady().then(() => {
 
   ipcMain.on("front-end-ready", () => {
     leagueConnector.start();
+    leagueClient.updateStatus();
+  });
+
+  ipcMain.on("league-client-credentials", (credentials) => {
+    if (credentials) {
+      leagueClient.setStatus("idle");
+    } else {
+      leagueClient.setStatus("notOpen");
+    }
+  });
+
+  ipcMain.on("league-client-status", (status) => {
+    mainWindow.webContents.send("league-client-status", status);
   });
 });
