@@ -6,25 +6,17 @@ import { Role } from "../../app.atoms";
 
 const diont = Diont({ broadcast: true });
 
-type LeagueClientCredentials = {
-  address: string;
-  port: number;
-  username: string;
-  password: string;
-  protocol: string;
-};
-
 const leagueConnector = new LCUConnector();
 
 export class YuumiCompanion {
-  private role: Role;
+  private role: Role = null;
   private mainWindow: BrowserWindow;
   private leagueClient: LeagueClientController;
   private hasAlreadyStarted: boolean;
 
   /* Networking */
-  private yuumiIp: string;
-  private isConnectedToPartner: boolean;
+  private yuumiIp: string = null;
+  private isConnectedToPartner = false;
 
   /**
    *  Construtor
@@ -38,10 +30,36 @@ export class YuumiCompanion {
 
   private startYuumiCompanion() {
     leagueConnector.start();
+
+    this.updateFrontEnd();
     this.hasAlreadyStarted = true;
   }
 
   private subscribeToEvents() {
+    /**
+     * League Client
+     */
+    leagueConnector.on("connect", (credentials) => {
+      this.leagueClient.setCredentials(credentials);
+      this.leagueClient.setStatus("idle");
+    });
+
+    leagueConnector.on("disconnect", () => {
+      this.leagueClient.setStatus("notOpen");
+      this.leagueClient.setCredentials(null);
+    });
+
+    /**
+     * Front-End;
+     */
+    ipcMain.on("frontEndReady", () => {
+      if (!this.hasAlreadyStarted) {
+        this.startYuumiCompanion();
+      } else {
+        this.updateFrontEnd();
+      }
+    });
+
     /**
      * Troca de Função
      */
@@ -50,39 +68,27 @@ export class YuumiCompanion {
        * Propagação de Ip ao selecionar Yuumi
        */
       if (this.role === null && role === "yuumi") {
+        this.role = role;
         this.propagateYuumiIpUltilConnected();
       } else if (this.role === "yuumi" && role === null) {
+        /**
+         * Renúncia ao ip ao sair da função de yuumi
+         */
+        this.role = null;
         this.renouncePropagatedYuumiIp();
+      } else {
+        this.role = role;
       }
 
-      this.mainWindow.webContents.send("selectRole", role);
-      this.role = role;
+      this.updateSelectedRoleOnFrontEnd();
     });
 
     /**
      * Descobrimento do IP da Yuumi
      */
-    diont.on("serviceAnnounced", (serviceInfo) => {
-      if (serviceInfo.name === "yuumi-companion") {
-        this.onCompanionYuumiFound(serviceInfo);
-      }
-    });
-
-    /**
-     * League Client
-     */
-    leagueConnector.on("connect", this.onConnectToLeagueClient.bind(this));
-    leagueConnector.on(
-      "disconnect",
-      this.onDisconnectToLeagueClient.bind(this)
-    );
-
-    /**
-     * Front-End;
-     */
-    ipcMain.on("frontEndReady", () => {
-      if (!this.hasAlreadyStarted) {
-        this.startYuumiCompanion();
+    diont.on("serviceAnnounced", ({ service }) => {
+      if (service.name === "yuumi-companion") {
+        this.onCompanionYuumiFound(service);
       }
     });
 
@@ -91,22 +97,25 @@ export class YuumiCompanion {
      */
     app.on("before-quit", () => {
       if (this.role === "yuumi") {
-        diont.renounceService({
-          name: "yuumi-companion",
-          port: "3010",
-        });
+        this.renouncePropagatedYuumiIp();
       }
     });
   }
 
+  /**
+   * Player
+   */
   private onCompanionYuumiFound(service: diontService) {
     this.yuumiIp = service.host;
-    this.mainWindow.webContents.send("foundYuumiCompanion", this.yuumiIp);
+    this.updateYuumiStateOnFrontEnd();
   }
 
+  /**
+   * Yuumi
+   */
   private propagateYuumiIpUltilConnected() {
     const checkIfIsConnectedAndPropagate = () => {
-      if (!this.isConnectedToPartner) {
+      if (this.role === "yuumi" && !this.isConnectedToPartner) {
         const services = diont.getServiceInfos();
 
         if (Object.keys(services).length === 0) {
@@ -134,13 +143,18 @@ export class YuumiCompanion {
     });
   }
 
-  private onConnectToLeagueClient(credentials: LeagueClientCredentials) {
-    this.leagueClient.setCredentials(credentials);
-    this.leagueClient.setStatus("idle");
+  private updateFrontEnd() {
+    this.updateSelectedRoleOnFrontEnd();
+    this.updateYuumiStateOnFrontEnd();
   }
 
-  private onDisconnectToLeagueClient() {
-    this.leagueClient.setStatus("notOpen");
-    this.leagueClient.setCredentials(null);
+  private updateSelectedRoleOnFrontEnd() {
+    this.mainWindow.webContents.send("selectRole", this.role);
+  }
+
+  private updateYuumiStateOnFrontEnd() {
+    if (this.yuumiIp !== null) {
+      this.mainWindow.webContents.send("foundYuumiCompanion");
+    }
   }
 }
