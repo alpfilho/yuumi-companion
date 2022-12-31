@@ -52,7 +52,7 @@ export const App = () => {
   return (
     <>
       <div className="app-body">
-        {clientStatus === "notOpen" ? (
+        {clientStatus === "notOpen" && selectedRole === null ? (
           <WaitingScreen />
         ) : selectedRole === null ? (
           <RoleSelector />

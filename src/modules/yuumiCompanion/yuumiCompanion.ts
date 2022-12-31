@@ -135,6 +135,7 @@ export class YuumiCompanion {
 
   private startListeningToYuumi() {
     if (this.yuumiIp) {
+      this.ioClient = io(`http://${this.yuumiIp}:3010`);
       this.ioClient.on("connect", () => {
         this.isConnectedToPartner = true;
         this.updateYuumiStateOnFrontEnd();
@@ -144,8 +145,6 @@ export class YuumiCompanion {
         this.isConnectedToPartner = false;
         this.updateYuumiStateOnFrontEnd();
       });
-
-      this.ioClient = io(`http://${this.yuumiIp}:3010`);
     }
   }
 
