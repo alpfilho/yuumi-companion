@@ -98,6 +98,12 @@ export class YuumiCompanion {
       }
     });
 
+    diont.on("serviceRenounced", ({ service }) => {
+      if (service.name === "yuumi-companion") {
+        this.onCompanionYuumiDisappear();
+      }
+    });
+
     /**
      * Antes de Sair
      */
@@ -119,10 +125,16 @@ export class YuumiCompanion {
     this.updateYuumiStateOnFrontEnd();
   }
 
+  private onCompanionYuumiDisappear() {
+    this.yuumiIp = null;
+    if (this.ioClient !== null) {
+      this.stopListeningToYuumi();
+    }
+    this.updateYuumiStateOnFrontEnd();
+  }
+
   private startListeningToYuumi() {
     if (this.yuumiIp) {
-      this.ioClient = io(`http://${this.yuumiIp}:3010`);
-
       this.ioClient.on("connect", () => {
         this.isConnectedToPartner = true;
         this.updateYuumiStateOnFrontEnd();
@@ -132,6 +144,8 @@ export class YuumiCompanion {
         this.isConnectedToPartner = false;
         this.updateYuumiStateOnFrontEnd();
       });
+
+      this.ioClient = io(`http://${this.yuumiIp}:3010`);
     }
   }
 
@@ -213,7 +227,9 @@ export class YuumiCompanion {
     if (this.isConnectedToPartner) {
       this.mainWindow.webContents.send("yuumiConnected");
     } else if (this.yuumiIp !== null) {
-      this.mainWindow.webContents.send("foundYuumiCompanion");
+      this.mainWindow.webContents.send("yuumiFound");
+    } else {
+      this.mainWindow.webContents.send("yuumiDisappeared");
     }
   }
 }

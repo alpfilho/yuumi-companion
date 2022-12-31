@@ -34,12 +34,16 @@ export const App = () => {
       setSelectedRole(role);
     });
 
-    app.on("foundYuumiCompanion", () => {
+    app.on("yuumiFound", () => {
       setYuumiCompanionStatus("found");
     });
 
     app.on("yuumiConnected", () => {
       setYuumiCompanionStatus("connected");
+    });
+
+    app.on("yuumiDisappeared", () => {
+      setYuumiCompanionStatus("notFound");
     });
 
     app.send("frontEndReady");
