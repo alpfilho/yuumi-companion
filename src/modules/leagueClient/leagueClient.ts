@@ -1,4 +1,5 @@
-import { ipcMain } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
+import fetch from "node-fetch";
 
 type Credentials = {
   address: string;
@@ -19,11 +20,27 @@ export type ClientStatus =
   | "afterGame";
 
 export class LeagueClientController {
-  protected credentials: Credentials | undefined = undefined;
-  protected status: ClientStatus = "notOpen";
+  private mainWindow: BrowserWindow;
+  private credentials: Credentials;
+  private apiUrl: string;
+  private status: ClientStatus = "notOpen";
+
+  constructor(mainWindow: BrowserWindow) {
+    this.mainWindow = mainWindow;
+    this.subscribeToEvents();
+  }
+
+  private subscribeToEvents() {
+    ipcMain.on("frontEndReady", () => {
+      this.updateFrontEnd();
+    });
+  }
 
   public setCredentials(credentials: Credentials) {
     this.credentials = credentials;
+    this.apiUrl = credentials
+      ? `${credentials.protocol}://${credentials.address}:${credentials.port}`
+      : undefined;
   }
 
   public setStatus(status: ClientStatus) {
@@ -31,11 +48,15 @@ export class LeagueClientController {
     this.onChangeStatus();
   }
 
-  protected onChangeStatus() {
-    this.updateStatus();
+  public getStatus() {
+    return this.status;
   }
 
-  public updateStatus() {
-    ipcMain.emit("league-client-status", this.status);
+  private onChangeStatus() {
+    this.updateFrontEnd();
+  }
+
+  private updateFrontEnd() {
+    this.mainWindow.webContents.send("clientStatus", this.status);
   }
 }

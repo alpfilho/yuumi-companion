@@ -13,8 +13,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "paths": {
-      "*": ["node_modules/*"]
-    }
+      "*": ["node_modules/*"],
+      "diont": ["./types/diont"]
+    },
+    "typeRoots": ["node_modules/@types", "types"]
   },
-  "include": ["src/**/*", "app.d.ts"]
+  "include": ["src/**/*", "app.d.ts", "diont.d.ts"],
+  "exclude": ["./types/**"]
 }

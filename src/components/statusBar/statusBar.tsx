@@ -1,34 +1,78 @@
+import { useAtomValue } from "jotai";
 import React, { FC } from "react";
-import { ClientStatus } from "../../modules/leagueClient";
+import { upperFirst } from "lodash";
+import { leagueClientStatusAtom, selectedRoleAtom } from "../../app.atoms";
 
 import "./statusBar.css";
 
-export const StatusBar: FC<{ clientStatus: ClientStatus }> = ({
-  clientStatus,
-}) => {
+export const StatusBar: FC = () => {
+  const clientStatus = useAtomValue(leagueClientStatusAtom);
+  const selectedRole = useAtomValue(selectedRoleAtom);
+  const isConnectedToPartner = false;
+
   return (
-    <div
-      className={`status-bar ${
-        clientStatus === "notOpen" ? "not-initiated" : "initiated"
-      }`}
-    >
-      {clientStatus === "notOpen"
-        ? "Jogo não iniciado"
-        : clientStatus === "idle"
-        ? "Jogo Iniciado"
-        : clientStatus === "inLobby"
-        ? "Criando Partida"
-        : clientStatus === "inQueue"
-        ? "Em Fila"
-        : clientStatus === "champSelect"
-        ? "Jogo Iniciado"
-        : clientStatus === "InGame"
-        ? "Jogo Iniciado"
-        : clientStatus === "afterGameHonor"
-        ? "Jogo Iniciado"
-        : clientStatus === "afterGame"
-        ? "Jogo Iniciado"
-        : "–"}
+    <div className="status-bar">
+      <div className="caption1 status-bar-info">
+        <span>status:</span>
+        <strong
+          className={
+            clientStatus === "notOpen"
+              ? "status-danger"
+              : clientStatus === "InGame"
+              ? "status-success"
+              : clientStatus === "idle"
+              ? "status-idle"
+              : "status-info"
+          }
+        >
+          {clientStatus === "notOpen"
+            ? "Jogo não iniciado"
+            : clientStatus === "idle"
+            ? "Aguardando"
+            : clientStatus === "inLobby"
+            ? "Criando Partida"
+            : clientStatus === "inQueue"
+            ? "Em Fila"
+            : clientStatus === "champSelect"
+            ? "Selecionando Campeões"
+            : clientStatus === "InGame"
+            ? "Em Jogo"
+            : clientStatus === "afterGameHonor"
+            ? "Honrando"
+            : clientStatus === "afterGame"
+            ? "Pós Jogo"
+            : "–"}
+        </strong>
+      </div>
+      {selectedRole && (
+        <>
+          <div className="status-bar-divider" />
+          <div className="caption1 status-bar-info">
+            <span>função:</span>
+            <strong
+              className={
+                selectedRole === null
+                  ? "status-danger"
+                  : selectedRole === "player"
+                  ? "status-warn"
+                  : "status-success"
+              }
+            >
+              {selectedRole === "player" && "Jogador"}
+              {selectedRole === "yuumi" && "Yuumi"}
+            </strong>
+          </div>
+          <div className="status-bar-divider" />
+          <div className="caption1 status-bar-info">
+            <span>parceiro:</span>
+            {isConnectedToPartner ? (
+              <strong className="status-success">Conectado</strong>
+            ) : (
+              <strong className="status-idle">Conectando</strong>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

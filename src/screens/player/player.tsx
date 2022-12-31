@@ -1,21 +1,50 @@
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useCallback, useEffect } from "react";
+import { useAtomValue } from "jotai";
+import {
+  isPartnerConnectedAtom,
+  leagueClientStatusAtom,
+} from "../../app.atoms";
 
 import "./player.css";
 
+const { app } = window;
+
 export const Player: FC = () => {
-  const [isGameStarted, setIsGameStarted] = useState(false);
+  const isPartnerConnected = useAtomValue(isPartnerConnectedAtom);
+  const leagueClientStatus = useAtomValue(leagueClientStatusAtom);
 
+  const onClickBack = useCallback(() => {
+    app.send("selectRole", null);
+  }, []);
+
+  /**
+   * On Init
+   */
   useEffect(() => {
-    // window.player.
+    app.on("companion.clientInfo", (event, info) => {
+      console.log(event, info);
+    });
 
-    return () => {
-      // window.player.stop();
-    };
+    app.send("companion.updateClientInfo");
   }, []);
 
   return (
-    <div className="player-screen-container">
-      <h1>Aguardando jogo iniciar</h1>
+    <div className="screen-container">
+      <header>
+        <h1 className="head1 status-warn">Jogador</h1>
+      </header>
+      <div className="screen-body">
+        {isPartnerConnected ? (
+          <span className="body2 status-success">Pronto para criar sala</span>
+        ) : (
+          <span className="head1 status-danger">Aguardando Yuumi</span>
+        )}
+      </div>
+      {leagueClientStatus === "idle" && (
+        <button className="back-button" onClick={onClickBack}>
+          {"<"} Voltar
+        </button>
+      )}
     </div>
   );
 };

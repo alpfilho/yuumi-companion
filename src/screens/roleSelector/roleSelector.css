@@ -1,0 +1,40 @@
+.role-selector {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-selector-header {
+  width: 100%;
+  text-align: center;
+  color: var(--magenta);
+}
+
+.role-selector-options {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.role-option {
+  height: 100%;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.role-option button .head1 .emote {
+  font-style: normal;
+}
+
+.role-option:first-child {
+  justify-content: flex-end;
+}
+
+.role-option:first-child button:hover {
+  color: var(--yellow);
+}

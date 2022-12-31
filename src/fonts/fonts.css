@@ -1,0 +1,47 @@
+@font-face {
+  font-family: "Comfortaa";
+  font-weight: 400;
+  src: url("./Comfortaa-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Inconsolata";
+  font-weight: 400;
+  src: url("./Inconsolata-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Prompt";
+  font-weight: 700;
+  src: url("./Prompt-ExtraBoldItalic.ttf");
+}
+
+h1,
+h2 {
+  margin: 0;
+  padding: 0;
+}
+
+.head1 {
+  font-family: "Prompt";
+  font-weight: 700;
+  font-style: italic;
+}
+
+.body1 {
+  font-family: "Inconsolata";
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.body2 {
+  font-family: "Comfortaa";
+  font-weight: 400;
+  font-size: 16px;
+}
+
+.caption1 {
+  font-family: "Inconsolata";
+  font-weight: 400;
+  font-size: 16px;
+}

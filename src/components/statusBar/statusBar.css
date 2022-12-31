@@ -1,15 +1,39 @@
 .status-bar {
   width: 100%;
+  height: var(--status-bar-height);
   background-color: var(--background2);
-  color: var(--success);
-  font-family: monospace;
-  padding: 0.5rem 1rem;
+  box-shadow: 0 -4px 64px rgba(0, 0, 0, 0.16);
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  padding: 0px 16px;
 }
 
-.not-initiated {
-  color: var(--danger);
+.status-bar-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  margin: 0 8px;
 }
 
-.initiated {
-  color: var(--success);
+.status-bar-info:first-child {
+  margin-left: 0;
+}
+
+.status-bar-info:last-child {
+  margin-right: 0;
+}
+
+.status-bar-info strong {
+  margin-left: 4px;
+}
+
+.status-bar-divider {
+  width: 2px;
+  height: 24px;
+  background-color: var(--background3);
 }

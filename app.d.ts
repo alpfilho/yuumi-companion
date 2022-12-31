@@ -1,9 +1,7 @@
-import { app } from "./src/modules/app";
-import { LeagueClientController } from "./src/modules/leagueClient";
+import { appIpc } from "./src/preload";
 
 declare global {
   interface Window {
-    app: typeof app;
-    leagueClient: typeof LeagueClientController;
+    app: typeof appIpc;
   }
 }

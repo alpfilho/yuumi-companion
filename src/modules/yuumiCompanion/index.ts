@@ -1,0 +1,1 @@
+export { YuumiCompanion } from "./yuumiCompanion";

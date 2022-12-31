@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./app";
 
 import "./app.css";
+import "./fonts/fonts.css";
 
 const containerElement = document.getElementById("app-root");
 

@@ -1,22 +1,15 @@
-import { contextBridge } from "electron";
-import { app } from "./modules/app";
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
-contextBridge.exposeInMainWorld("yuumiCompanion", {
-  start: () => {
-    // Start the yuumi companion
+export const appIpc = {
+  on: (
+    event: string,
+    callback: (event: IpcRendererEvent, ...args: unknown[]) => void
+  ) => {
+    ipcRenderer.on(event, callback);
   },
-  stop: () => {
-    // Stop the yuumi companion
+  send: (event: string, payload?: unknown) => {
+    ipcRenderer.send(event, payload);
   },
-});
+};
 
-contextBridge.exposeInMainWorld("player", {
-  start: () => {
-    // Start the yuumi companion
-  },
-  stop: () => {
-    // Stop the yuumi companion
-  },
-});
-
-contextBridge.exposeInMainWorld("app", app);
+contextBridge.exposeInMainWorld("app", appIpc);
