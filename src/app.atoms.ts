@@ -12,3 +12,6 @@ export const isPartnerConnectedAtom = atom(false);
 
 export const playerSelectedChampionAtom = atom<"draven" | "jinx">(null);
 export const leagueClientStatusAtom = atom<ClientStatus>("notOpen");
+export const yuumiCompanionStatusAtom = atom<
+  "notFound" | "found" | "connected"
+>("notFound");

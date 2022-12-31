@@ -5,9 +5,10 @@ export type diontService = {
   [key: string]: unknown;
 };
 
-export default function diont(): {
+export default function diont(options: { broadcast: boolean }): {
   on(eventName: string, callback: (service: diontService) => void): string;
   announceService(service: diontService): string;
   renounceService(service: diontService): void | false;
-  getServiceInfos(): void;
+  getServiceInfos(): { [key: string]: diontService };
+  repeatAnnouncements(): void;
 };

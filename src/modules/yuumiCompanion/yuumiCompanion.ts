@@ -1,9 +1,10 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow, ipcMain, app } from "electron";
 import LCUConnector from "lcu-connector";
 import { LeagueClientController } from "../leagueClient";
 import Diont, { diontService } from "diont";
+import { Role } from "../../app.atoms";
 
-const diont = Diont();
+const diont = Diont({ broadcast: true });
 
 type LeagueClientCredentials = {
   address: string;
@@ -16,10 +17,14 @@ type LeagueClientCredentials = {
 const leagueConnector = new LCUConnector();
 
 export class YuumiCompanion {
-  private hasAlreadyStarted: boolean;
+  private role: Role;
   private mainWindow: BrowserWindow;
   private leagueClient: LeagueClientController;
-  private playerIp: string;
+  private hasAlreadyStarted: boolean;
+
+  /* Networking */
+  private yuumiIp: string;
+  private isConnectedToPartner: boolean;
 
   /**
    *  Construtor
@@ -33,7 +38,6 @@ export class YuumiCompanion {
 
   private startYuumiCompanion() {
     leagueConnector.start();
-    console.log(diont.getServiceInfos());
     this.hasAlreadyStarted = true;
   }
 
@@ -42,9 +46,25 @@ export class YuumiCompanion {
      * Troca de Função
      */
     ipcMain.on("selectRole", (_event, role) => {
+      /**
+       * Propagação de Ip ao selecionar Yuumi
+       */
+      if (this.role === null && role === "yuumi") {
+        this.propagateYuumiIpUltilConnected();
+      } else if (this.role === "yuumi" && role === null) {
+        this.renouncePropagatedYuumiIp();
+      }
+
       this.mainWindow.webContents.send("selectRole", role);
-      if (role === "player") {
-        this.propagatePlayerIp();
+      this.role = role;
+    });
+
+    /**
+     * Descobrimento do IP da Yuumi
+     */
+    diont.on("serviceAnnounced", (serviceInfo) => {
+      if (serviceInfo.name === "yuumi-companion") {
+        this.onCompanionYuumiFound(serviceInfo);
       }
     });
 
@@ -67,23 +87,49 @@ export class YuumiCompanion {
     });
 
     /**
-     * Serviço de Networking
+     * Antes de Sair
      */
-    diont.on("serviceAnnounced", (serviceInfo) => {
-      if (serviceInfo.name === "yuumi-companion-player") {
-        this.onCompanionPlayerFound(serviceInfo);
+    app.on("before-quit", () => {
+      if (this.role === "yuumi") {
+        diont.renounceService({
+          name: "yuumi-companion",
+          port: "3010",
+        });
       }
     });
   }
 
-  private onCompanionPlayerFound(service: diontService) {
-    this.playerIp = service.host;
-    console.log(this.playerIp);
+  private onCompanionYuumiFound(service: diontService) {
+    this.yuumiIp = service.host;
+    this.mainWindow.webContents.send("foundYuumiCompanion", this.yuumiIp);
   }
 
-  private propagatePlayerIp() {
-    diont.announceService({
-      name: "yuumi-companion-player",
+  private propagateYuumiIpUltilConnected() {
+    const checkIfIsConnectedAndPropagate = () => {
+      if (!this.isConnectedToPartner) {
+        const services = diont.getServiceInfos();
+
+        if (Object.keys(services).length === 0) {
+          diont.announceService({
+            name: "yuumi-companion",
+            port: "3010",
+          });
+        } else {
+          diont.repeatAnnouncements();
+        }
+
+        setTimeout(() => {
+          checkIfIsConnectedAndPropagate();
+        }, 1000);
+      }
+    };
+
+    checkIfIsConnectedAndPropagate();
+  }
+
+  private renouncePropagatedYuumiIp() {
+    diont.renounceService({
+      name: "yuumi-companion",
       port: "3010",
     });
   }

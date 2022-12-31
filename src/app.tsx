@@ -1,6 +1,11 @@
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect } from "react";
-import { leagueClientStatusAtom, Role, selectedRoleAtom } from "./app.atoms";
+import {
+  yuumiCompanionStatusAtom,
+  leagueClientStatusAtom,
+  Role,
+  selectedRoleAtom,
+} from "./app.atoms";
 import { RoleSelector } from "./screens/roleSelector/roleSelector";
 
 import { StatusBar } from "./components/statusBar";
@@ -15,6 +20,7 @@ const { app } = window;
 export const App = () => {
   const [clientStatus, setClientStatus] = useAtom(leagueClientStatusAtom);
   const [selectedRole, setSelectedRole] = useAtom(selectedRoleAtom);
+  const setYuumiCompanionStatus = useSetAtom(yuumiCompanionStatusAtom);
 
   /**
    * On Init
@@ -26,6 +32,10 @@ export const App = () => {
 
     app.on("selectRole", (_event, role: Role) => {
       setSelectedRole(role);
+    });
+
+    app.on("foundYuumiCompanion", () => {
+      setYuumiCompanionStatus("found");
     });
 
     app.send("frontEndReady");

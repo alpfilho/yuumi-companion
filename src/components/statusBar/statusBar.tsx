@@ -1,14 +1,18 @@
 import { useAtomValue } from "jotai";
 import React, { FC } from "react";
-import { upperFirst } from "lodash";
-import { leagueClientStatusAtom, selectedRoleAtom } from "../../app.atoms";
+
+import {
+  leagueClientStatusAtom,
+  selectedRoleAtom,
+  yuumiCompanionStatusAtom,
+} from "../../app.atoms";
 
 import "./statusBar.css";
 
 export const StatusBar: FC = () => {
   const clientStatus = useAtomValue(leagueClientStatusAtom);
   const selectedRole = useAtomValue(selectedRoleAtom);
-  const isConnectedToPartner = false;
+  const yuumiCompanionStatus = useAtomValue(yuumiCompanionStatusAtom);
 
   return (
     <div className="status-bar">
@@ -65,7 +69,9 @@ export const StatusBar: FC = () => {
           <div className="status-bar-divider" />
           <div className="caption1 status-bar-info">
             <span>parceiro:</span>
-            {isConnectedToPartner ? (
+            {yuumiCompanionStatus === "notFound" ? (
+              <strong className="status-danger">Não encontrado</strong>
+            ) : yuumiCompanionStatus === "connected" ? (
               <strong className="status-success">Conectado</strong>
             ) : (
               <strong className="status-idle">Conectando</strong>
