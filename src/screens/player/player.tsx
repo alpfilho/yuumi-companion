@@ -1,16 +1,17 @@
 import React, { FC, useCallback, useEffect } from "react";
 import { useAtomValue } from "jotai";
 import {
-  isPartnerConnectedAtom,
   leagueClientStatusAtom,
+  yuumiCompanionStatusAtom,
 } from "../../app.atoms";
 
 import "./player.css";
+import { WaitingScreen } from "../waitingScreen";
 
 const { app } = window;
 
 export const Player: FC = () => {
-  const isPartnerConnected = useAtomValue(isPartnerConnectedAtom);
+  const yuumiCompanionStatus = useAtomValue(yuumiCompanionStatusAtom);
   const leagueClientStatus = useAtomValue(leagueClientStatusAtom);
 
   const onClickBack = useCallback(() => {
@@ -34,13 +35,22 @@ export const Player: FC = () => {
         <h1 className="head1 status-warn">Jogador</h1>
       </header>
       <div className="screen-body">
-        {isPartnerConnected ? (
-          <span className="body2 status-success">Pronto para criar sala</span>
+        {leagueClientStatus !== "notOpen" ? (
+          yuumiCompanionStatus === "connected" ? (
+            <>
+              <span className="body2 status-success">
+                Pronto para criar sala
+              </span>
+              <button>Criar sala</button>
+            </>
+          ) : (
+            <h1 className="head1 muted-title">Aguardando Yuumi</h1>
+          )
         ) : (
-          <span className="head1 status-danger">Aguardando Yuumi</span>
+          <WaitingScreen />
         )}
       </div>
-      {leagueClientStatus === "idle" && (
+      {(leagueClientStatus === "idle" || leagueClientStatus === "notOpen") && (
         <button className="back-button" onClick={onClickBack}>
           {"<"} Voltar
         </button>

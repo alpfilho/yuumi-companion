@@ -159,6 +159,7 @@ export class YuumiCompanion {
   private propagateYuumiIpUltilConnected() {
     const checkIfIsConnectedAndPropagate = () => {
       if (this.role === "yuumi" && !this.isConnectedToPartner) {
+        this.yuumiIp = "127.0.0.1";
         const services = diont.getServiceInfos();
 
         if (Object.keys(services).length === 0) {
@@ -191,14 +192,14 @@ export class YuumiCompanion {
       serveClient: false,
     });
 
-    this.ioServer.on("connect", () => {
+    this.ioServer.on("connection", (socket) => {
       this.isConnectedToPartner = true;
       this.updateYuumiStateOnFrontEnd();
-    });
 
-    this.ioServer.on("disconnect", () => {
-      this.isConnectedToPartner = false;
-      this.updateYuumiStateOnFrontEnd();
+      socket.on("disconnect", () => {
+        this.isConnectedToPartner = false;
+        this.updateYuumiStateOnFrontEnd();
+      });
     });
 
     this.ioServer.listen(3010);

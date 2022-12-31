@@ -48,37 +48,36 @@ export const StatusBar: FC = () => {
             : "–"}
         </strong>
       </div>
-      {selectedRole && (
-        <>
-          <div className="status-bar-divider" />
-          <div className="caption1 status-bar-info">
-            <span>função:</span>
-            <strong
-              className={
-                selectedRole === null
-                  ? "status-danger"
-                  : selectedRole === "player"
-                  ? "status-warn"
-                  : "status-success"
-              }
-            >
-              {selectedRole === "player" && "Jogador"}
-              {selectedRole === "yuumi" && "Yuumi"}
-            </strong>
-          </div>
-          <div className="status-bar-divider" />
-          <div className="caption1 status-bar-info">
-            <span>parceiro:</span>
-            {yuumiCompanionStatus === "notFound" ? (
-              <strong className="status-danger">Não encontrado</strong>
-            ) : yuumiCompanionStatus === "connected" ? (
-              <strong className="status-success">Conectado</strong>
-            ) : (
-              <strong className="status-idle">Conectando</strong>
-            )}
-          </div>
-        </>
-      )}
+
+      <div className="status-bar-divider" />
+      <div className="caption1 status-bar-info">
+        <span>função:</span>
+        <strong
+          className={
+            selectedRole === null
+              ? "status-danger"
+              : selectedRole === "player"
+              ? "status-warn"
+              : "status-success"
+          }
+        >
+          {selectedRole === "player" && "Jogador"}
+          {selectedRole === "yuumi" && "Yuumi"}
+          {selectedRole === null && "Não Selecionado"}
+        </strong>
+      </div>
+
+      <div className="status-bar-divider" />
+      <div className="caption1 status-bar-info">
+        <span>parceiro:</span>
+        {yuumiCompanionStatus === "notFound" ? (
+          <strong className="status-danger">Não encontrado</strong>
+        ) : yuumiCompanionStatus === "connected" ? (
+          <strong className="status-success">Conectado</strong>
+        ) : (
+          <strong className="status-idle">Encontrado</strong>
+        )}
+      </div>
     </div>
   );
 };
