@@ -3,6 +3,8 @@ import LCUConnector from "lcu-connector";
 import { LeagueClientController } from "../leagueClient";
 import Diont, { diontService } from "diont";
 import { Role } from "../../app.atoms";
+import { Server } from "socket.io";
+import { io, Socket } from "socket.io-client";
 
 const diont = Diont({ broadcast: true });
 
@@ -12,7 +14,9 @@ export class YuumiCompanion {
   private role: Role = null;
   private mainWindow: BrowserWindow;
   private leagueClient: LeagueClientController;
-  private hasAlreadyStarted: boolean;
+  private hasAlreadyStarted = false;
+  private ioServer: Server = null;
+  private ioClient: Socket = null;
 
   /* Networking */
   private yuumiIp: string = null;
@@ -64,20 +68,22 @@ export class YuumiCompanion {
      * Troca de Função
      */
     ipcMain.on("selectRole", (_event, role) => {
-      /**
-       * Propagação de Ip ao selecionar Yuumi
-       */
       if (this.role === null && role === "yuumi") {
-        this.role = role;
+        this.role = "yuumi";
         this.propagateYuumiIpUltilConnected();
+        this.startListeningToPlayer();
       } else if (this.role === "yuumi" && role === null) {
-        /**
-         * Renúncia ao ip ao sair da função de yuumi
-         */
         this.role = null;
+        this.stopListeningToPlayer();
         this.renouncePropagatedYuumiIp();
-      } else {
-        this.role = role;
+      } else if (this.role === null && role === "player") {
+        this.role = "player";
+        this.startListeningToYuumi();
+      } else if (this.role === "player" && role === null) {
+        this.role = null;
+        if (this.isConnectedToPartner) {
+          this.stopListeningToYuumi();
+        }
       }
 
       this.updateSelectedRoleOnFrontEnd();
@@ -107,7 +113,25 @@ export class YuumiCompanion {
    */
   private onCompanionYuumiFound(service: diontService) {
     this.yuumiIp = service.host;
+    if (this.ioClient === null && this.role === "player") {
+      this.startListeningToYuumi();
+    }
     this.updateYuumiStateOnFrontEnd();
+  }
+
+  private startListeningToYuumi() {
+    if (this.yuumiIp) {
+      this.ioClient = io(`http://${this.yuumiIp}:3010`);
+
+      this.ioClient.on("connect", () => {
+        this.isConnectedToPartner = true;
+      });
+    }
+  }
+
+  private stopListeningToYuumi() {
+    this.ioClient.disconnect();
+    this.ioClient = null;
   }
 
   /**
@@ -143,6 +167,23 @@ export class YuumiCompanion {
     });
   }
 
+  private startListeningToPlayer() {
+    this.ioServer = new Server({
+      serveClient: false,
+    });
+
+    this.ioServer.listen(3010);
+  }
+
+  private stopListeningToPlayer() {
+    this.ioServer.close(() => {
+      this.ioServer = null;
+    });
+  }
+
+  /**
+   * Front-End
+   */
   private updateFrontEnd() {
     this.updateSelectedRoleOnFrontEnd();
     this.updateYuumiStateOnFrontEnd();
