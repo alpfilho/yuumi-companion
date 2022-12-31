@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
 import LCUConnector from "lcu-connector";
 import { LeagueClientController } from "../leagueClient";
-import Diont from "diont";
+import Diont, { diontService } from "diont";
 
 const diont = Diont();
 
@@ -16,9 +16,10 @@ type LeagueClientCredentials = {
 const leagueConnector = new LCUConnector();
 
 export class YuumiCompanion {
-  private mainWindow: BrowserWindow;
   private hasAlreadyStarted: boolean;
+  private mainWindow: BrowserWindow;
   private leagueClient: LeagueClientController;
+  private playerIp: string;
 
   /**
    *  Construtor
@@ -32,6 +33,7 @@ export class YuumiCompanion {
 
   private startYuumiCompanion() {
     leagueConnector.start();
+    console.log(diont.getServiceInfos());
     this.hasAlreadyStarted = true;
   }
 
@@ -63,11 +65,26 @@ export class YuumiCompanion {
         this.startYuumiCompanion();
       }
     });
+
+    /**
+     * Serviço de Networking
+     */
+    diont.on("serviceAnnounced", (serviceInfo) => {
+      if (serviceInfo.name === "yuumi-companion-player") {
+        this.onCompanionPlayerFound(serviceInfo);
+      }
+    });
+  }
+
+  private onCompanionPlayerFound(service: diontService) {
+    this.playerIp = service.host;
+    console.log(this.playerIp);
   }
 
   private propagatePlayerIp() {
     diont.announceService({
-      name: "yuumiCompanion:draven",
+      name: "yuumi-companion-player",
+      port: "3010",
     });
   }
 
