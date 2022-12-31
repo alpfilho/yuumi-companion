@@ -125,6 +125,12 @@ export class YuumiCompanion {
 
       this.ioClient.on("connect", () => {
         this.isConnectedToPartner = true;
+        this.updateYuumiStateOnFrontEnd();
+      });
+
+      this.ioClient.on("disconnect", () => {
+        this.isConnectedToPartner = false;
+        this.updateYuumiStateOnFrontEnd();
       });
     }
   }
@@ -172,6 +178,16 @@ export class YuumiCompanion {
       serveClient: false,
     });
 
+    this.ioServer.on("connect", () => {
+      this.isConnectedToPartner = true;
+      this.updateYuumiStateOnFrontEnd();
+    });
+
+    this.ioServer.on("disconnect", () => {
+      this.isConnectedToPartner = false;
+      this.updateYuumiStateOnFrontEnd();
+    });
+
     this.ioServer.listen(3010);
   }
 
@@ -194,7 +210,9 @@ export class YuumiCompanion {
   }
 
   private updateYuumiStateOnFrontEnd() {
-    if (this.yuumiIp !== null) {
+    if (this.isConnectedToPartner) {
+      this.mainWindow.webContents.send("yuumiConnected");
+    } else if (this.yuumiIp !== null) {
       this.mainWindow.webContents.send("foundYuumiCompanion");
     }
   }

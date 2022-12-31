@@ -38,6 +38,10 @@ export const App = () => {
       setYuumiCompanionStatus("found");
     });
 
+    app.on("yuumiConnected", () => {
+      setYuumiCompanionStatus("connected");
+    });
+
     app.send("frontEndReady");
   }, []);
 
