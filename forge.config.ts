@@ -24,11 +24,11 @@ const config: ForgeConfig = {
             },
           },
           {
-            html: "./src/modules/leagueOverlay/index.html",
-            js: "./src/modules/leagueOverlay/renderer.tsx",
+            html: "./src/screens/leagueOverlay/index.html",
+            js: "./src/screens/leagueOverlay/renderer.tsx",
             name: "league_overlay",
             preload: {
-              js: "./src/modules/leagueOverlay/preload.ts",
+              js: "./src/screens/leagueOverlay/preload.ts",
             },
           },
         ],

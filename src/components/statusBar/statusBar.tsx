@@ -1,18 +1,14 @@
 import { useAtomValue } from "jotai";
 import React, { FC } from "react";
 
-import {
-  leagueClientStatusAtom,
-  selectedRoleAtom,
-  yuumiCompanionStatusAtom,
-} from "../../app.atoms";
+import { leagueClientStatusAtom, selectedRoleAtom, yuumiStatusAtom } from "../../app.atoms";
 
 import "./statusBar.css";
 
 export const StatusBar: FC = () => {
   const clientStatus = useAtomValue(leagueClientStatusAtom);
   const selectedRole = useAtomValue(selectedRoleAtom);
-  const yuumiCompanionStatus = useAtomValue(yuumiCompanionStatusAtom);
+  const yuumiStatus = useAtomValue(yuumiStatusAtom);
 
   return (
     <div className="status-bar">
@@ -31,6 +27,8 @@ export const StatusBar: FC = () => {
         >
           {clientStatus === "notOpen"
             ? "Jogo não iniciado"
+            : clientStatus === "open"
+            ? "Aberto"
             : clientStatus === "idle"
             ? "Aguardando"
             : clientStatus === "inLobby"
@@ -54,7 +52,7 @@ export const StatusBar: FC = () => {
         <span>função:</span>
         <strong
           className={
-            selectedRole === null
+            selectedRole === "notSelected"
               ? "status-danger"
               : selectedRole === "player"
               ? "status-warn"
@@ -63,16 +61,16 @@ export const StatusBar: FC = () => {
         >
           {selectedRole === "player" && "Jogador"}
           {selectedRole === "yuumi" && "Yuumi"}
-          {selectedRole === null && "Não Selecionado"}
+          {selectedRole === "notSelected" && "Não Selecionado"}
         </strong>
       </div>
 
       <div className="status-bar-divider" />
       <div className="caption1 status-bar-info">
         <span>parceiro:</span>
-        {yuumiCompanionStatus === "notFound" ? (
+        {yuumiStatus === "notFound" ? (
           <strong className="status-danger">Não encontrado</strong>
-        ) : yuumiCompanionStatus === "connected" ? (
+        ) : yuumiStatus === "connected" ? (
           <strong className="status-success">Conectado</strong>
         ) : (
           <strong className="status-idle">Encontrado</strong>

@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from "react";
+import React, { FC } from "react";
 import { useAtomValue } from "jotai";
 import {
   yuumiCompanionStatusAtom,
@@ -6,15 +6,9 @@ import {
 } from "../../app.atoms";
 import { WaitingScreen } from "../waitingScreen";
 
-const { app } = window;
-
 export const Yuumi: FC = () => {
   const yuumiCompanionStatus = useAtomValue(yuumiCompanionStatusAtom);
   const leagueClientStatus = useAtomValue(leagueClientStatusAtom);
-
-  const onClickBack = useCallback(() => {
-    app.send("selectRole", null);
-  }, []);
 
   return (
     <div className="screen-container">
@@ -36,11 +30,6 @@ export const Yuumi: FC = () => {
           <WaitingScreen />
         )}
       </div>
-      {(leagueClientStatus === "idle" || leagueClientStatus === "notOpen") && (
-        <button className="back-button" onClick={onClickBack}>
-          {"<"} Voltar
-        </button>
-      )}
     </div>
   );
 };

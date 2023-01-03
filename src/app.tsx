@@ -1,10 +1,15 @@
 import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect } from "react";
 import {
-  yuumiCompanionStatusAtom,
+  yuumiStatusAtom,
   leagueClientStatusAtom,
   Role,
   selectedRoleAtom,
+  YuumiStatus,
+  playerStatusAtom,
+  yuumiAccountInfoAtom,
+  playerAccountInfoAtom,
+  AccountInfo,
 } from "./app.atoms";
 import { RoleSelector } from "./screens/roleSelector/roleSelector";
 
@@ -19,43 +24,56 @@ const { app } = window;
 export const App = () => {
   const [selectedRole, setSelectedRole] = useAtom(selectedRoleAtom);
   const setClientStatus = useSetAtom(leagueClientStatusAtom);
-  const setYuumiCompanionStatus = useSetAtom(yuumiCompanionStatusAtom);
+  const setYuumiStatus = useSetAtom(yuumiStatusAtom);
+  const setPlayerStatus = useSetAtom(playerStatusAtom);
+  const setYuumiAccountInfo = useSetAtom(yuumiAccountInfoAtom);
+  const setPlayerAccountInfo = useSetAtom(playerAccountInfoAtom);
 
   /**
    * On Init
    */
   useEffect(() => {
-    app.on("clientStatus", (_event, status: ClientStatus) => {
+    /**
+     * Eventos
+     */
+
+    app.on("leagueClient:clientStatus", (_event, status: ClientStatus) => {
       setClientStatus(status);
     });
 
-    app.on("selectRole", (_event, role: Role) => {
+    app.on("main:roleStatus", (_event, role: Role) => {
       setSelectedRole(role);
     });
 
-    app.on("yuumiFound", () => {
-      setYuumiCompanionStatus("found");
+    app.on("main:yuumiStatus", (_event, status: YuumiStatus) => {
+      setYuumiStatus(status);
     });
 
-    app.on("yuumiConnected", () => {
-      setYuumiCompanionStatus("connected");
+    app.on("main:playerStatus", (_event, status: YuumiStatus) => {
+      setPlayerStatus(status);
     });
 
-    app.on("yuumiDisappeared", () => {
-      setYuumiCompanionStatus("notFound");
+    app.on("main:playerAccountInfo", (_event, account: AccountInfo) => {
+      setPlayerAccountInfo(account);
     });
 
-    app.send("frontEndReady");
+    app.on("main:yuumiAccountInfo", (_event, account: AccountInfo) => {
+      setYuumiAccountInfo(account);
+    });
+
+    /**
+     * Sinal de inicialização
+     */
+    app.send("mainFrontEnd:ready");
   }, []);
 
   return (
     <>
       <div className="app-body">
-        {selectedRole === null ? (
+        {selectedRole === "notSelected" ? (
           <RoleSelector />
         ) : (
-          (selectedRole === "player" && <Player />) ||
-          (selectedRole === "yuumi" && <Yuumi />)
+          (selectedRole === "player" && <Player />) || (selectedRole === "yuumi" && <Yuumi />)
         )}
       </div>
       <StatusBar />

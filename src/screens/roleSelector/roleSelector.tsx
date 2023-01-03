@@ -6,11 +6,11 @@ const { app } = window;
 
 export const RoleSelector: FC = () => {
   const onClickPlayer = useCallback(() => {
-    app.send("selectRole", "player");
+    app.send("mainFrontEnd:changeRole", "player");
   }, []);
 
   const onClickYuumi = useCallback(() => {
-    app.send("selectRole", "yuumi");
+    app.send("mainFrontEnd:changeRole", "yuumi");
   }, []);
 
   return (

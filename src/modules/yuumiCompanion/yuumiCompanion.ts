@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, app } from "electron";
 import LCUConnector from "lcu-connector";
 import { LeagueClientController } from "../leagueClient";
 import Diont, { diontService } from "diont";
-import { Role } from "../../app.atoms";
+import { AccountInfo, PlayerStatus, Role, YuumiStatus } from "../../app.atoms";
 import { Server } from "socket.io";
 import { io, Socket } from "socket.io-client";
 
@@ -11,16 +11,24 @@ const diont = Diont({ broadcast: true });
 const leagueConnector = new LCUConnector();
 
 export class YuumiCompanion {
-  private role: Role = null;
-  private mainWindow: BrowserWindow;
-  private leagueClient: LeagueClientController;
-  private hasAlreadyStarted = false;
+  private mainWindow: BrowserWindow = null;
+  private leagueClient: LeagueClientController = null;
   private ioServer: Server = null;
   private ioClient: Socket = null;
 
+  private role: Role = "notSelected";
+  private yuumiStatus: YuumiStatus = "notFound";
+  private playerStatus: PlayerStatus = "notFound";
+
+  private hasAlreadyStarted = false;
+
   /* Networking */
   private yuumiIp: string = null;
-  private isConnectedToPartner = false;
+  private isListeningToYuumi = false;
+  private isListeningToPlayer = false;
+
+  private playerAccountInfo: AccountInfo = null;
+  private yuumiAccountInfo: AccountInfo = null;
 
   /**
    *  Construtor
@@ -34,9 +42,18 @@ export class YuumiCompanion {
 
   private startYuumiCompanion() {
     leagueConnector.start();
-
-    this.updateFrontEnd();
     this.hasAlreadyStarted = true;
+    this.updateFrontEnd();
+  }
+
+  private onAccountInfo(accountInfo: AccountInfo) {
+    if (this.role === "player") {
+      this.playerAccountInfo = accountInfo;
+      this.updateFrontEnd();
+    } else if (this.role === "yuumi") {
+      this.yuumiAccountInfo = accountInfo;
+      this.updateFrontEnd();
+    }
   }
 
   private subscribeToEvents() {
@@ -44,19 +61,21 @@ export class YuumiCompanion {
      * League Client
      */
     leagueConnector.on("connect", (credentials) => {
-      this.leagueClient.setCredentials(credentials);
-      this.leagueClient.setStatus("idle");
+      this.leagueClient.onConnectToLeagueClient(credentials);
     });
 
     leagueConnector.on("disconnect", () => {
-      this.leagueClient.setStatus("notOpen");
-      this.leagueClient.setCredentials(null);
+      this.leagueClient.onDisconnectToLeagueClient();
+    });
+
+    ipcMain.on("leagueClient:accountInfo", (_event, accountInfo: AccountInfo) => {
+      this.onAccountInfo(accountInfo);
     });
 
     /**
      * Front-End;
      */
-    ipcMain.on("frontEndReady", () => {
+    ipcMain.on("mainFrontEnd:ready", () => {
       if (!this.hasAlreadyStarted) {
         this.startYuumiCompanion();
       } else {
@@ -67,26 +86,8 @@ export class YuumiCompanion {
     /**
      * Troca de Função
      */
-    ipcMain.on("selectRole", (_event, role) => {
-      if (this.role === null && role === "yuumi") {
-        this.role = "yuumi";
-        this.propagateYuumiIpUltilConnected();
-        this.startListeningToPlayer();
-      } else if (this.role === "yuumi" && role === null) {
-        this.role = null;
-        this.stopListeningToPlayer();
-        this.renouncePropagatedYuumiIp();
-      } else if (this.role === null && role === "player") {
-        this.role = "player";
-        this.startListeningToYuumi();
-      } else if (this.role === "player" && role === null) {
-        this.role = null;
-        if (this.isConnectedToPartner) {
-          this.stopListeningToYuumi();
-        }
-      }
-
-      this.updateSelectedRoleOnFrontEnd();
+    ipcMain.on("mainFrontEnd:changeRole", (_event, role) => {
+      this.setRole(role);
     });
 
     /**
@@ -94,90 +95,159 @@ export class YuumiCompanion {
      */
     diont.on("serviceAnnounced", ({ service }) => {
       if (service.name === "yuumi-companion") {
-        this.onCompanionYuumiFound(service);
+        this.onYuumiAppear(service);
       }
     });
 
     diont.on("serviceRenounced", ({ service }) => {
       if (service.name === "yuumi-companion") {
-        this.onCompanionYuumiDisappear();
+        this.onYuumiDisappear();
       }
     });
+  }
 
-    /**
-     * Antes de Sair
-     */
-    app.on("before-quit", () => {
-      if (this.role === "yuumi") {
-        this.renouncePropagatedYuumiIp();
+  private onChangeRole() {
+    if (this.role === "player") {
+      this.startListeningToYuumi();
+    }
+
+    if (this.role === "yuumi") {
+      this.startListeningToPlayer();
+    }
+
+    if (this.role === "notSelected") {
+      if (this.isListeningToPlayer) {
+        this.stopListeningToPlayer();
       }
-    });
+
+      if (this.isListeningToYuumi) {
+        this.stopListeningToYuumi();
+      }
+
+      this.playerAccountInfo = null;
+      this.yuumiAccountInfo = null;
+      this.setYuumiStatus("notFound");
+      this.setPlayerStatus("notFound");
+    }
   }
 
   /**
    * Player
    */
-  private onCompanionYuumiFound(service: diontService) {
+  private onYuumiAppear(service: diontService) {
     this.yuumiIp = service.host;
-    if (this.ioClient === null && this.role === "player") {
-      this.startListeningToYuumi();
-    }
-    this.updateYuumiStateOnFrontEnd();
+    this.setYuumiStatus("found");
   }
 
-  private onCompanionYuumiDisappear() {
+  private onYuumiDisappear() {
     this.yuumiIp = null;
-    if (this.ioClient !== null) {
-      this.stopListeningToYuumi();
-    }
-    this.updateYuumiStateOnFrontEnd();
+    this.setYuumiStatus("notFound");
   }
 
   private startListeningToYuumi() {
-    if (this.yuumiIp) {
-      this.ioClient = io(`http://${this.yuumiIp}:3010`);
-      this.ioClient.on("connect", () => {
-        this.isConnectedToPartner = true;
-        this.updateYuumiStateOnFrontEnd();
-      });
+    this.isListeningToYuumi = true;
+    this.setPlayerStatus("found");
 
-      this.ioClient.on("disconnect", () => {
-        this.isConnectedToPartner = false;
-        this.updateYuumiStateOnFrontEnd();
-      });
-    }
+    const connectOrWait = () => {
+      if (this.yuumiIp !== null) {
+        this.ioClient = io(`http://${this.yuumiIp}:3010`);
+        this.ioClient.on("connect", () => {
+          this.onPlayerConnectToYuumi();
+        });
+        this.ioClient.on("disconnect", () => {
+          this.onPlayerDisconnectToYuumi();
+        });
+      } else {
+        setTimeout(() => {
+          connectOrWait();
+        }, 2000);
+      }
+    };
+
+    connectOrWait();
   }
 
   private stopListeningToYuumi() {
-    this.ioClient.disconnect();
-    this.ioClient = null;
+    this.yuumiIp = null;
+    if (this.ioClient) {
+      this.ioClient.disconnect();
+      this.ioClient = null;
+    }
+    this.isListeningToYuumi = false;
+  }
+
+  private onPlayerConnectToYuumi() {
+    this.setPlayerStatus("connected");
+    this.setYuumiStatus("connected");
+  }
+
+  private onPlayerDisconnectToYuumi() {
+    this.setPlayerStatus("found");
+    this.setYuumiStatus("found");
   }
 
   /**
    * Yuumi
    */
-  private propagateYuumiIpUltilConnected() {
-    const checkIfIsConnectedAndPropagate = () => {
-      if (this.role === "yuumi" && !this.isConnectedToPartner) {
-        this.yuumiIp = "127.0.0.1";
-        const services = diont.getServiceInfos();
+  private startListeningToPlayer() {
+    this.isListeningToPlayer = true;
+    this.yuumiIp = "127.0.0.1";
+    this.setYuumiStatus("found");
+    this.propagateIpUntilConnected();
 
-        if (Object.keys(services).length === 0) {
-          diont.announceService({
-            name: "yuumi-companion",
-            port: "3010",
-          });
-        } else {
-          diont.repeatAnnouncements();
-        }
+    this.ioServer = new Server({
+      serveClient: false,
+    });
 
-        setTimeout(() => {
-          checkIfIsConnectedAndPropagate();
-        }, 1000);
+    this.ioServer.on("connection", (socket) => {
+      this.onYuumiConnectToPlayer();
+
+      socket.on("disconnect", () => {
+        this.onYummiDisconnectToPlayer();
+      });
+    });
+
+    this.ioServer.listen(3010);
+  }
+
+  private stopListeningToPlayer() {
+    this.yuumiIp = null;
+    this.setYuumiStatus("notFound");
+    this.renouncePropagatedYuumiIp();
+    this.ioServer.close(() => {
+      this.ioServer = null;
+    });
+    this.isListeningToPlayer = false;
+  }
+
+  private propagateIpUntilConnected() {
+    if (this.playerStatus === "notFound") {
+      const services = diont.getServiceInfos();
+
+      if (Object.keys(services).length === 0) {
+        diont.announceService({
+          name: "yuumi-companion",
+          port: "3010",
+        });
+      } else {
+        diont.repeatAnnouncements();
       }
-    };
+    } else {
+      setTimeout(() => {
+        this.propagateIpUntilConnected();
+      }, 2000);
+    }
+  }
 
-    checkIfIsConnectedAndPropagate();
+  private onYuumiConnectToPlayer() {
+    this.setPlayerStatus("connected");
+    this.setYuumiStatus("connected");
+  }
+
+  private onYummiDisconnectToPlayer() {
+    this.setPlayerStatus("notFound");
+    this.setYuumiStatus("found");
+    this.propagateIpUntilConnected();
   }
 
   private renouncePropagatedYuumiIp() {
@@ -187,49 +257,42 @@ export class YuumiCompanion {
     });
   }
 
-  private startListeningToPlayer() {
-    this.ioServer = new Server({
-      serveClient: false,
-    });
+  /**
+   * On Changes
+   */
 
-    this.ioServer.on("connection", (socket) => {
-      this.isConnectedToPartner = true;
-      this.updateYuumiStateOnFrontEnd();
-
-      socket.on("disconnect", () => {
-        this.isConnectedToPartner = false;
-        this.updateYuumiStateOnFrontEnd();
-      });
-    });
-
-    this.ioServer.listen(3010);
+  private onChangePlayerStatus() {
+    this.updateFrontEnd();
   }
 
-  private stopListeningToPlayer() {
-    this.ioServer.close(() => {
-      this.ioServer = null;
-    });
+  private onChangeYuumiStatus() {
+    this.updateFrontEnd();
   }
 
   /**
    * Front-End
    */
   private updateFrontEnd() {
-    this.updateSelectedRoleOnFrontEnd();
-    this.updateYuumiStateOnFrontEnd();
+    this.mainWindow.webContents.send("main:roleStatus", this.role);
+    this.mainWindow.webContents.send("main:yuumiStatus", this.yuumiStatus);
+    this.mainWindow.webContents.send("main:playerStatus", this.playerStatus);
+    this.mainWindow.webContents.send("main:playerAccountInfo", this.playerAccountInfo);
+    this.mainWindow.webContents.send("main:yuumiAccountInfo", this.yuumiAccountInfo);
+    this.leagueClient.updateFrontEnd();
   }
 
-  private updateSelectedRoleOnFrontEnd() {
-    this.mainWindow.webContents.send("selectRole", this.role);
+  public setRole(role: Role) {
+    this.role = role;
+    this.onChangeRole();
   }
 
-  private updateYuumiStateOnFrontEnd() {
-    if (this.isConnectedToPartner) {
-      this.mainWindow.webContents.send("yuumiConnected");
-    } else if (this.yuumiIp !== null) {
-      this.mainWindow.webContents.send("yuumiFound");
-    } else {
-      this.mainWindow.webContents.send("yuumiDisappeared");
-    }
+  private setYuumiStatus(status: YuumiStatus) {
+    this.yuumiStatus = status;
+    this.onChangeYuumiStatus();
+  }
+
+  private setPlayerStatus(status: PlayerStatus) {
+    this.playerStatus = status;
+    this.onChangePlayerStatus();
   }
 }

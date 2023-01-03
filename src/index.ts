@@ -14,9 +14,9 @@ app.whenReady().then(() => {
     height: 448,
     title: "Yuumi Companion",
     resizable: false,
-    frame: true,
+    frame: false,
     alwaysOnTop: false,
-    movable: true,
+    movable: false,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -24,5 +24,4 @@ app.whenReady().then(() => {
 
   new YuumiCompanion(mainWindow);
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  mainWindow.webContents.openDevTools();
 });

@@ -33,6 +33,7 @@ body {
 
   display: flex;
   flex-direction: column;
+  user-select: none;
 }
 
 .app-root {
@@ -82,12 +83,6 @@ header {
   justify-content: center;
   align-items: center;
   color: var(--yellow);
-}
-
-.back-button {
-  position: fixed;
-  top: 4px;
-  left: 4px;
 }
 
 .screen-container {
