@@ -3,9 +3,8 @@ import { useAtomValue } from "jotai";
 import { leagueClientStatusAtom, yuumiStatusAtom } from "../../app.atoms";
 
 import "./player.css";
+import { PartyStatus } from "../../components/partyStatus";
 import { WaitingScreen } from "../waitingScreen";
-
-const { app } = window;
 
 export const Player: FC = () => {
   const yuumiStatus = useAtomValue(yuumiStatusAtom);
@@ -30,6 +29,10 @@ export const Player: FC = () => {
           <WaitingScreen />
         )}
       </div>
+
+      <footer>
+        <PartyStatus />
+      </footer>
     </div>
   );
 };
