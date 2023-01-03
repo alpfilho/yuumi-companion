@@ -1,13 +1,10 @@
 import React, { FC } from "react";
 import { useAtomValue } from "jotai";
-import {
-  yuumiCompanionStatusAtom,
-  leagueClientStatusAtom,
-} from "../../app.atoms";
+import { yuumiStatusAtom, leagueClientStatusAtom } from "../../app.atoms";
 import { WaitingScreen } from "../waitingScreen";
 
 export const Yuumi: FC = () => {
-  const yuumiCompanionStatus = useAtomValue(yuumiCompanionStatusAtom);
+  const yuumiCompanionStatus = useAtomValue(yuumiStatusAtom);
   const leagueClientStatus = useAtomValue(leagueClientStatusAtom);
 
   return (
@@ -19,9 +16,7 @@ export const Yuumi: FC = () => {
         {leagueClientStatus !== "notOpen" ? (
           yuumiCompanionStatus === "connected" ? (
             <>
-              <span className="body2 status-success">
-                Pronto para criar sala
-              </span>
+              <span className="body2 status-success">Pronto</span>
             </>
           ) : (
             <h1 className="head1 muted-title">Aguardando Player</h1>
