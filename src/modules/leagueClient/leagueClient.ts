@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
 import fetch from "node-fetch";
 import https from "https";
-import { AccountInfo } from "src/app.atoms";
+import { AccountInfo } from "../../app.atoms";
 
 export type Credentials = {
   address: string;
@@ -11,7 +11,16 @@ export type Credentials = {
   protocol: string;
 };
 
-export type ClientStatus = "notOpen" | "open" | "idle" | "inLobby" | "inQueue" | "champSelect" | "InGame" | "afterGameHonor" | "afterGame";
+export type ClientStatus =
+  | "notOpen"
+  | "open"
+  | "idle"
+  | "inLobby"
+  | "inQueue"
+  | "champSelect"
+  | "InGame"
+  | "afterGameHonor"
+  | "afterGame";
 
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false,
@@ -22,7 +31,7 @@ export class LeagueClientController {
   private credentials: Credentials;
   private apiUrl: string;
   private status: ClientStatus = "notOpen";
-  private accountInfo: AccountInfo;
+  public accountInfo: AccountInfo = null;
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
@@ -35,7 +44,9 @@ export class LeagueClientController {
           method: "GET",
           agent: httpsAgent,
           headers: {
-            Authorization: `Basic ${Buffer.from(this.credentials.username + ":" + this.credentials.password).toString("base64")}`,
+            Authorization: `Basic ${Buffer.from(this.credentials.username + ":" + this.credentials.password).toString(
+              "base64"
+            )}`,
           },
         }).then((response) => resolve(response.json() as Promise<DataType>));
       } catch (error) {

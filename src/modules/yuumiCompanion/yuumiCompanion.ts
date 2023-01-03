@@ -46,7 +46,7 @@ export class YuumiCompanion {
     this.updateFrontEnd();
   }
 
-  private onAccountInfo(accountInfo: AccountInfo) {
+  private setAccountInfo(accountInfo: AccountInfo) {
     if (this.role === "player") {
       this.setPlayerAccountInfo(accountInfo);
     }
@@ -68,7 +68,7 @@ export class YuumiCompanion {
     });
 
     ipcMain.on("leagueClient:accountInfo", (_event, accountInfo: AccountInfo) => {
-      this.onAccountInfo(accountInfo);
+      this.setAccountInfo(accountInfo);
     });
 
     /**
@@ -113,6 +113,8 @@ export class YuumiCompanion {
     if (this.role === "yuumi") {
       this.startListeningToPlayer();
     }
+
+    this.setAccountInfo(this.leagueClient.accountInfo);
 
     if (this.role === "notSelected") {
       if (this.isListeningToPlayer) {
