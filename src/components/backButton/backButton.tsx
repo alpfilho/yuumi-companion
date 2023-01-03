@@ -11,13 +11,13 @@ export const BackButton: FC = () => {
   const leagueClientStatus = useAtomValue(leagueClientStatusAtom);
 
   const onClickBack = useCallback(() => {
-    app.send("mainFrontEnd:changeRole", null);
+    app.send("mainFrontEnd:changeRole", "notSelected");
   }, []);
 
-  if (leagueClientStatus === "idle" || leagueClientStatus === "notOpen") {
+  if (leagueClientStatus === "idle" || leagueClientStatus === "open" || leagueClientStatus === "notOpen") {
     return (
       <button className="back-button" onClick={onClickBack}>
-        {"<"} Voltar
+        Voltar
       </button>
     );
   }

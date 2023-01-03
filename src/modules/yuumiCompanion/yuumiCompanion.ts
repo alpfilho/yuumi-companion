@@ -285,13 +285,13 @@ export class YuumiCompanion {
   }
 
   private onChangeYuumiAccountInfo() {
-    if (this.role === "yuumi") {
+    if (this.role === "yuumi" && this.ioServer !== null) {
       this.ioServer.send("yuumi:accountInfo", this.yuumiAccountInfo);
     }
   }
 
   private onChangePlayerAccountInfo() {
-    if (this.role === "player") {
+    if (this.role === "player" && this.ioClient !== null) {
       this.ioClient.send("player:accountInfo", this.playerAccountInfo);
     }
   }

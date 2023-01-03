@@ -18,6 +18,7 @@ import { StatusBar } from "./components/statusBar";
 import type { ClientStatus } from "./modules/leagueClient";
 import { Player } from "./screens/player";
 import { Yuumi } from "./screens/yuumi";
+import { BackButton } from "./components/backButton";
 
 const { app } = window;
 
@@ -77,6 +78,7 @@ export const App = () => {
         )}
       </div>
       <StatusBar />
+      <BackButton />
     </>
   );
 };
