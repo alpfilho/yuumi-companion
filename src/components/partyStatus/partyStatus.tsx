@@ -1,10 +1,14 @@
 import { useAtomValue } from "jotai";
-import React, { FC } from "react";
+import React, { FC, useEffect } from "react";
 import { yuumiAccountInfoAtom, playerAccountInfoAtom } from "../../app.atoms";
 
 export const PartyStatus: FC = () => {
   const playerAccount = useAtomValue(playerAccountInfoAtom);
   const yuumiAccount = useAtomValue(yuumiAccountInfoAtom);
+
+  useEffect(() => {
+    console.log(playerAccount, yuumiAccount);
+  }, [playerAccount, yuumiAccount]);
 
   return (
     <div>

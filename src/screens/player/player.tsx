@@ -20,10 +20,10 @@ export const Player: FC = () => {
         {leagueClientStatus !== "notOpen" ? (
           yuumiStatus === "connected" ? (
             <>
-              <span className="body1 status-idle">Aguardando informações dos jogadores</span>
+              <span className="body2 status-success">Pronto</span>
             </>
           ) : (
-            <h1 className="head1 status-idle">Aguardando Yuumi</h1>
+            <span className="body1 status-idle">Aguardando Yuumi</span>
           )
         ) : (
           <WaitingScreen />

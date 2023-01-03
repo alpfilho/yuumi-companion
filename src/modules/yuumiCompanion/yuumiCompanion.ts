@@ -48,11 +48,10 @@ export class YuumiCompanion {
 
   private onAccountInfo(accountInfo: AccountInfo) {
     if (this.role === "player") {
-      this.playerAccountInfo = accountInfo;
-      this.updateFrontEnd();
-    } else if (this.role === "yuumi") {
-      this.yuumiAccountInfo = accountInfo;
-      this.updateFrontEnd();
+      this.setPlayerAccountInfo(accountInfo);
+    }
+    if (this.role === "yuumi") {
+      this.setYuumiAccountInfo(accountInfo);
     }
   }
 
@@ -154,9 +153,6 @@ export class YuumiCompanion {
         this.ioClient.on("connect", () => {
           this.onPlayerConnectToYuumi();
         });
-        this.ioClient.on("yuumi:accountInfo", (info) => {
-          this.setYuumiAccountInfo(info);
-        });
         this.ioClient.on("disconnect", () => {
           this.onPlayerDisconnectToYuumi();
         });
@@ -182,11 +178,18 @@ export class YuumiCompanion {
   private onPlayerConnectToYuumi() {
     this.setPlayerStatus("connected");
     this.setYuumiStatus("connected");
+
+    this.ioClient.emit("player:accountInfo", this.playerAccountInfo);
+
+    this.ioClient.on("yuumi:accountInfo", (info) => {
+      this.setYuumiAccountInfo(info);
+    });
   }
 
   private onPlayerDisconnectToYuumi() {
     this.setPlayerStatus("found");
     this.setYuumiStatus("found");
+    this.setYuumiAccountInfo(null);
   }
 
   /**
@@ -205,7 +208,9 @@ export class YuumiCompanion {
     this.ioServer.on("connection", (socket) => {
       this.onYuumiConnectToPlayer();
 
-      socket.on("draven:accountInfo", (info) => {
+      socket.emit("yuumi:accountInfo", this.yuumiAccountInfo);
+
+      socket.on("player:accountInfo", (info) => {
         this.setPlayerAccountInfo(info);
       });
 
@@ -253,6 +258,7 @@ export class YuumiCompanion {
 
   private onYummiDisconnectToPlayer() {
     this.setPlayerStatus("notFound");
+    this.setPlayerAccountInfo(null);
     this.setYuumiStatus("found");
     this.propagateIpUntilConnected();
   }
