@@ -7,9 +7,9 @@ export type YuumiStatus = "notFound" | "found" | "connected";
 export type PlayerStatus = "notFound" | "found" | "connected";
 
 export type AccountInfo = {
-  summonerProfilePic: string;
-  summonerId: number;
-  summonerName: string;
+  id: number;
+  name: string;
+  profile: string;
 };
 
 export const selectedRoleAtom = atom<Role, Role>("notSelected", (_get, set, update) => {

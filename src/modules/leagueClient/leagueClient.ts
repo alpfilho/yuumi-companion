@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain } from "electron";
 import fetch from "node-fetch";
 import https from "https";
 import { AccountInfo } from "../../app.atoms";
+import { DataDragon } from "../dataDragon";
 
 export type Credentials = {
   address: string;
@@ -28,6 +29,7 @@ const httpsAgent = new https.Agent({
 
 export class LeagueClientController {
   private mainWindow: BrowserWindow;
+  private dataDragon: DataDragon;
   private credentials: Credentials;
   private apiUrl: string;
   private status: ClientStatus = "notOpen";
@@ -35,6 +37,7 @@ export class LeagueClientController {
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
+    this.dataDragon = new DataDragon();
   }
 
   private async fetchClient<DataType>(url: string): Promise<DataType> {
@@ -57,15 +60,20 @@ export class LeagueClientController {
 
   private async getAccountInfo() {
     try {
-      const summonerData = await this.fetchClient<{
+      const {
+        summonerId,
+        displayName: summonerName,
+        profileIconId,
+      } = await this.fetchClient<{
         displayName: string;
         summonerId: number;
         profileIconId: number;
       }>("/lol-summoner/v1/current-summoner");
+
       this.setAccountInfo({
-        summonerId: summonerData.summonerId,
-        summonerName: summonerData.displayName,
-        summonerProfilePic: summonerData.profileIconId ? "" : null,
+        id: summonerId,
+        name: summonerName,
+        profile: this.dataDragon.getProfilePath(profileIconId),
       });
     } catch (error) {
       console.log(error);
@@ -73,13 +81,13 @@ export class LeagueClientController {
     }
   }
 
-  private onChangeAccountInfo() {
-    ipcMain.emit("leagueClient:accountInfo", this.accountInfo);
-  }
-
   public setAccountInfo(accountInfo: AccountInfo) {
     this.accountInfo = accountInfo;
     this.onChangeAccountInfo();
+  }
+
+  private onChangeAccountInfo() {
+    ipcMain.emit("leagueClient:accountInfo", this.accountInfo);
   }
 
   private clearAccountInfo() {
@@ -88,8 +96,8 @@ export class LeagueClientController {
 
   public onConnectToLeagueClient(credentials: Credentials) {
     this.setCredentials(credentials);
-    this.getAccountInfo();
     this.setStatus("open");
+    this.getAccountInfo();
   }
 
   public onDisconnectToLeagueClient() {
@@ -122,5 +130,6 @@ export class LeagueClientController {
 
   public updateFrontEnd() {
     this.mainWindow.webContents.send("leagueClient:clientStatus", this.status);
+    this.mainWindow.webContents.send("leagueClient:accountInfo", this.accountInfo);
   }
 }

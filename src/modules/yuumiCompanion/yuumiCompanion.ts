@@ -1,18 +1,14 @@
-import { BrowserWindow, ipcMain, app } from "electron";
+import { BrowserWindow, ipcMain } from "electron";
 import LCUConnector from "lcu-connector";
 import { LeagueClientController } from "../leagueClient";
-import Diont, { diontService } from "diont";
+import Diont, { diontReturn, diontService } from "diont";
 import { AccountInfo, PlayerStatus, Role, YuumiStatus } from "../../app.atoms";
 import { Server } from "socket.io";
 import { io, Socket } from "socket.io-client";
 
-const diont = Diont({ broadcast: true });
-
-const leagueConnector = new LCUConnector();
-
 export class YuumiCompanion {
   private mainWindow: BrowserWindow = null;
-  private leagueClient: LeagueClientController = null;
+  private diont: diontReturn = null;
   private ioServer: Server = null;
   private ioClient: Socket = null;
 
@@ -27,6 +23,13 @@ export class YuumiCompanion {
   private isListeningToYuumi = false;
   private isListeningToPlayer = false;
 
+  /**
+   * League Client
+   */
+  private leagueConnector: LCUConnector = null;
+  private leagueClient: LeagueClientController = null;
+  private clientAccountInfo: AccountInfo = null;
+
   private playerAccountInfo: AccountInfo = null;
   private yuumiAccountInfo: AccountInfo = null;
 
@@ -35,51 +38,53 @@ export class YuumiCompanion {
    * @param mainWindow Front-End Principal
    */
   constructor(mainWindow: BrowserWindow) {
+    this.leagueConnector = new LCUConnector();
     this.leagueClient = new LeagueClientController(mainWindow);
+    this.diont = Diont({ broadcast: true });
     this.mainWindow = mainWindow;
+  }
+
+  public start() {
+    /**
+     * Se inscreve á eventos de outros processos
+     */
     this.subscribeToEvents();
-  }
 
-  private startYuumiCompanion() {
-    leagueConnector.start();
+    /**
+     * Inicia a integração com o cliente do lol
+     */
+    this.leagueConnector.start();
     this.hasAlreadyStarted = true;
-    this.updateFrontEnd();
   }
 
-  private setAccountInfo(accountInfo: AccountInfo) {
-    if (this.role === "player") {
-      this.setPlayerAccountInfo(accountInfo);
-    }
-    if (this.role === "yuumi") {
-      this.setYuumiAccountInfo(accountInfo);
-    }
+  private onChangeClientAccountInfo() {}
+
+  private setClientAccountInfo(accountInfo: AccountInfo) {
+    this.clientAccountInfo = accountInfo;
+    this.onChangeClientAccountInfo();
   }
 
   private subscribeToEvents() {
     /**
      * League Client
      */
-    leagueConnector.on("connect", (credentials) => {
+    this.leagueConnector.on("connect", (credentials) => {
       this.leagueClient.onConnectToLeagueClient(credentials);
     });
 
-    leagueConnector.on("disconnect", () => {
+    this.leagueConnector.on("disconnect", () => {
       this.leagueClient.onDisconnectToLeagueClient();
     });
 
     ipcMain.on("leagueClient:accountInfo", (_event, accountInfo: AccountInfo) => {
-      this.setAccountInfo(accountInfo);
+      this.setClientAccountInfo(accountInfo);
     });
 
     /**
      * Front-End;
      */
     ipcMain.on("mainFrontEnd:ready", () => {
-      if (!this.hasAlreadyStarted) {
-        this.startYuumiCompanion();
-      } else {
-        this.updateFrontEnd();
-      }
+      this.updateFrontEnd();
     });
 
     /**
@@ -92,13 +97,13 @@ export class YuumiCompanion {
     /**
      * Descobrimento do IP da Yuumi
      */
-    diont.on("serviceAnnounced", ({ service }) => {
+    this.diont.on("serviceAnnounced", ({ service }) => {
       if (service.name === "yuumi-companion") {
         this.onYuumiAppear(service);
       }
     });
 
-    diont.on("serviceRenounced", ({ service }) => {
+    this.diont.on("serviceRenounced", ({ service }) => {
       if (service.name === "yuumi-companion") {
         this.onYuumiDisappear();
       }
@@ -114,8 +119,6 @@ export class YuumiCompanion {
       this.startListeningToPlayer();
     }
 
-    this.setAccountInfo(this.leagueClient.accountInfo);
-
     if (this.role === "notSelected") {
       if (this.isListeningToPlayer) {
         this.stopListeningToPlayer();
@@ -125,8 +128,6 @@ export class YuumiCompanion {
         this.stopListeningToYuumi();
       }
 
-      this.setPlayerAccountInfo(null);
-      this.setYuumiAccountInfo(null);
       this.setYuumiStatus("notFound");
       this.setPlayerStatus("notFound");
     }
@@ -180,18 +181,11 @@ export class YuumiCompanion {
   private onPlayerConnectToYuumi() {
     this.setPlayerStatus("connected");
     this.setYuumiStatus("connected");
-
-    this.ioClient.emit("player:accountInfo", this.playerAccountInfo);
-
-    this.ioClient.on("yuumi:accountInfo", (info) => {
-      this.setYuumiAccountInfo(info);
-    });
   }
 
   private onPlayerDisconnectToYuumi() {
     this.setPlayerStatus("found");
     this.setYuumiStatus("found");
-    this.setYuumiAccountInfo(null);
   }
 
   /**
@@ -208,13 +202,7 @@ export class YuumiCompanion {
     });
 
     this.ioServer.on("connection", (socket) => {
-      this.onYuumiConnectToPlayer();
-
-      socket.emit("yuumi:accountInfo", this.yuumiAccountInfo);
-
-      socket.on("player:accountInfo", (info) => {
-        this.setPlayerAccountInfo(info);
-      });
+      this.onYuumiConnectToPlayer(socket as unknown as Socket);
 
       socket.on("disconnect", () => {
         this.onYummiDisconnectToPlayer();
@@ -236,15 +224,15 @@ export class YuumiCompanion {
 
   private propagateIpUntilConnected() {
     if (this.playerStatus === "notFound") {
-      const services = diont.getServiceInfos();
+      const services = this.diont.getServiceInfos();
 
       if (Object.keys(services).length === 0) {
-        diont.announceService({
+        this.diont.announceService({
           name: "yuumi-companion",
           port: "3010",
         });
       } else {
-        diont.repeatAnnouncements();
+        this.diont.repeatAnnouncements();
       }
     } else {
       setTimeout(() => {
@@ -253,59 +241,40 @@ export class YuumiCompanion {
     }
   }
 
-  private onYuumiConnectToPlayer() {
+  private onYuumiConnectToPlayer(socket: Socket) {
     this.setPlayerStatus("connected");
     this.setYuumiStatus("connected");
+
+    this.subscribeToPlayerEvents(socket);
+  }
+
+  private subscribeToPlayerEvents(socket: Socket) {
+    socket.on("player:accountInfo", (data) => {
+      console.log("o player falou olá", data);
+    });
   }
 
   private onYummiDisconnectToPlayer() {
     this.setPlayerStatus("notFound");
-    this.setPlayerAccountInfo(null);
     this.setYuumiStatus("found");
     this.propagateIpUntilConnected();
   }
 
   private renouncePropagatedYuumiIp() {
-    diont.renounceService({
+    this.diont.renounceService({
       name: "yuumi-companion",
       port: "3010",
     });
   }
 
   /**
-   * On Changes
-   */
-
-  private onChangePlayerStatus() {
-    this.updateFrontEnd();
-  }
-
-  private onChangeYuumiStatus() {
-    this.updateFrontEnd();
-  }
-
-  private onChangeYuumiAccountInfo() {
-    if (this.role === "yuumi" && this.ioServer !== null) {
-      this.ioServer.send("yuumi:accountInfo", this.yuumiAccountInfo);
-    }
-  }
-
-  private onChangePlayerAccountInfo() {
-    if (this.role === "player" && this.ioClient !== null) {
-      this.ioClient.send("player:accountInfo", this.playerAccountInfo);
-    }
-  }
-
-  /**
    * Front-End
    */
   private updateFrontEnd() {
+    this.leagueClient.updateFrontEnd();
     this.mainWindow.webContents.send("main:roleStatus", this.role);
     this.mainWindow.webContents.send("main:yuumiStatus", this.yuumiStatus);
     this.mainWindow.webContents.send("main:playerStatus", this.playerStatus);
-    this.mainWindow.webContents.send("main:playerAccountInfo", this.playerAccountInfo);
-    this.mainWindow.webContents.send("main:yuumiAccountInfo", this.yuumiAccountInfo);
-    this.leagueClient.updateFrontEnd();
   }
 
   public setRole(role: Role) {
@@ -315,21 +284,9 @@ export class YuumiCompanion {
 
   private setYuumiStatus(status: YuumiStatus) {
     this.yuumiStatus = status;
-    this.onChangeYuumiStatus();
   }
 
   private setPlayerStatus(status: PlayerStatus) {
     this.playerStatus = status;
-    this.onChangePlayerStatus();
-  }
-
-  private setPlayerAccountInfo(account: AccountInfo) {
-    this.playerAccountInfo = account;
-    this.onChangePlayerAccountInfo();
-  }
-
-  private setYuumiAccountInfo(account: AccountInfo) {
-    this.playerAccountInfo = account;
-    this.onChangeYuumiAccountInfo();
   }
 }

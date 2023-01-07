@@ -21,7 +21,12 @@ app.whenReady().then(() => {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
+  const companion = new YuumiCompanion(mainWindow);
 
-  new YuumiCompanion(mainWindow);
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+  /**
+   * Inicia o processo principal:
+   */
+  companion.start();
 });

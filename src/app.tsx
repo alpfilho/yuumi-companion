@@ -27,8 +27,6 @@ export const App = () => {
   const setClientStatus = useSetAtom(leagueClientStatusAtom);
   const setYuumiStatus = useSetAtom(yuumiStatusAtom);
   const setPlayerStatus = useSetAtom(playerStatusAtom);
-  const setYuumiAccountInfo = useSetAtom(yuumiAccountInfoAtom);
-  const setPlayerAccountInfo = useSetAtom(playerAccountInfoAtom);
 
   /**
    * On Init
@@ -54,14 +52,6 @@ export const App = () => {
       setPlayerStatus(status);
     });
 
-    app.on("main:playerAccountInfo", (_event, account: AccountInfo) => {
-      setPlayerAccountInfo(account);
-    });
-
-    app.on("main:yuumiAccountInfo", (_event, account: AccountInfo) => {
-      setYuumiAccountInfo(account);
-    });
-
     /**
      * Sinal de inicialização
      */
@@ -77,6 +67,7 @@ export const App = () => {
           (selectedRole === "player" && <Player />) || (selectedRole === "yuumi" && <Yuumi />)
         )}
       </div>
+
       <StatusBar />
       <BackButton />
     </>

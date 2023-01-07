@@ -1,10 +1,7 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 
 export const appIpc = {
-  on: (
-    event: string,
-    callback: (event: IpcRendererEvent, ...args: unknown[]) => void
-  ) => {
+  on: (event: string, callback: (event: IpcRendererEvent, ...args: unknown[]) => void) => {
     ipcRenderer.on(event, callback);
   },
   send: (event: string, payload?: unknown) => {
