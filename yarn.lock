@@ -8705,6 +8705,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sanitize.css@npm:^13.0.0":
+  version: 13.0.0
+  resolution: "sanitize.css@npm:13.0.0"
+  checksum: a99ca77c4d135800a4a93c3555e5aa4a2eb040a833df716dbe9132e1f2086fbf9acdb8021a579f40dcf77166d2d50f3358b4b6121a247d26fed5a0e6f5af3bb7
+  languageName: node
+  linkType: hard
+
 "sax@npm:>=0.6.0":
   version: 1.2.4
   resolution: "sax@npm:1.2.4"
@@ -10740,6 +10747,7 @@ __metadata:
     ps-list: ^8.1.0
     react: ^18.2.0
     react-dom: ^18.2.0
+    sanitize.css: ^13.0.0
     socket.io: ^4.5.4
     socket.io-client: ^4.5.4
     style-loader: ^3.0.0

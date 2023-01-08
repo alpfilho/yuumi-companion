@@ -1,0 +1,12 @@
+.summoner-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.33);
+  overflow: hidden;
+}
+
+.summoner-avatar img {
+  width: 100%;
+  object-fit: fill;
+}

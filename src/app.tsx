@@ -27,6 +27,8 @@ export const App = () => {
   const setClientStatus = useSetAtom(leagueClientStatusAtom);
   const setYuumiStatus = useSetAtom(yuumiStatusAtom);
   const setPlayerStatus = useSetAtom(playerStatusAtom);
+  const setPlayerAccountInfo = useSetAtom(playerAccountInfoAtom);
+  const setYuumiAccountInfo = useSetAtom(yuumiAccountInfoAtom);
 
   /**
    * On Init
@@ -50,6 +52,15 @@ export const App = () => {
 
     app.on("main:playerStatus", (_event, status: YuumiStatus) => {
       setPlayerStatus(status);
+    });
+
+    app.on("main:playerAccountInfo", (_event, accountInfo: AccountInfo) => {
+      console.log(accountInfo);
+      setPlayerAccountInfo(accountInfo);
+    });
+
+    app.on("main:yuumiAccountInfo", (_event, accountInfo: AccountInfo) => {
+      setYuumiAccountInfo(accountInfo);
     });
 
     /**

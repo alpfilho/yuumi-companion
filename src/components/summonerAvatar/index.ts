@@ -1,0 +1,1 @@
+export { SummonerAvatar } from "./summonerAvatar";

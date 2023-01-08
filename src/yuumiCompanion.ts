@@ -1,8 +1,8 @@
 import { BrowserWindow, ipcMain } from "electron";
 import LCUConnector from "lcu-connector";
-import { LeagueClientController } from "../leagueClient";
+import { LeagueClientController } from "./modules/leagueClient";
 import Diont, { diontReturn, diontService } from "diont";
-import { AccountInfo, PlayerStatus, Role, YuumiStatus } from "../../app.atoms";
+import { AccountInfo, PlayerStatus, Role, YuumiStatus } from "./app.atoms";
 import { Server } from "socket.io";
 import { io, Socket } from "socket.io-client";
 
@@ -57,7 +57,25 @@ export class YuumiCompanion {
     this.hasAlreadyStarted = true;
   }
 
-  private onChangeClientAccountInfo() {}
+  private setAccountInfo() {
+    if (this.role === "player") {
+      this.playerAccountInfo = this.clientAccountInfo;
+    }
+
+    if (this.role === "yuumi") {
+      this.yuumiAccountInfo = this.clientAccountInfo;
+    }
+
+    if (this.role === "notSelected") {
+      this.playerAccountInfo = null;
+      this.yuumiAccountInfo = null;
+    }
+  }
+
+  private onChangeClientAccountInfo() {
+    this.setAccountInfo();
+    this.updateFrontEnd();
+  }
 
   private setClientAccountInfo(accountInfo: AccountInfo) {
     this.clientAccountInfo = accountInfo;
@@ -76,7 +94,10 @@ export class YuumiCompanion {
       this.leagueClient.onDisconnectToLeagueClient();
     });
 
-    ipcMain.on("leagueClient:accountInfo", (_event, accountInfo: AccountInfo) => {
+    /**
+     * Não faço ideia do porquê desse evento chegar diferente
+     */
+    ipcMain.on("leagueClient:accountInfo", (accountInfo: AccountInfo) => {
       this.setClientAccountInfo(accountInfo);
     });
 
@@ -113,6 +134,8 @@ export class YuumiCompanion {
   private onChangeRole() {
     if (this.role === "player") {
       this.startListeningToYuumi();
+
+      this.playerAccountInfo = this.clientAccountInfo;
     }
 
     if (this.role === "yuumi") {
@@ -130,7 +153,12 @@ export class YuumiCompanion {
 
       this.setYuumiStatus("notFound");
       this.setPlayerStatus("notFound");
+
+      this.playerAccountInfo = null;
+      this.yuumiAccountInfo = null;
     }
+
+    this.updateFrontEnd();
   }
 
   /**
@@ -274,7 +302,9 @@ export class YuumiCompanion {
     this.leagueClient.updateFrontEnd();
     this.mainWindow.webContents.send("main:roleStatus", this.role);
     this.mainWindow.webContents.send("main:yuumiStatus", this.yuumiStatus);
+    this.mainWindow.webContents.send("main:yuumiAccountInfo", this.yuumiAccountInfo);
     this.mainWindow.webContents.send("main:playerStatus", this.playerStatus);
+    this.mainWindow.webContents.send("main:playerAccountInfo", this.playerAccountInfo);
   }
 
   public setRole(role: Role) {
@@ -282,11 +312,21 @@ export class YuumiCompanion {
     this.onChangeRole();
   }
 
+  private onChangeYuumiStatus() {
+    this.updateFrontEnd();
+  }
+
+  private onChangePlayerStatus() {
+    this.updateFrontEnd();
+  }
+
   private setYuumiStatus(status: YuumiStatus) {
     this.yuumiStatus = status;
+    this.onChangeYuumiStatus();
   }
 
   private setPlayerStatus(status: PlayerStatus) {
     this.playerStatus = status;
+    this.onChangePlayerStatus();
   }
 }

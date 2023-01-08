@@ -1,0 +1,60 @@
+.party-status {
+  width: 100%;
+  height: auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: row;
+  padding-bottom: 16px;
+}
+
+.party-side {
+  width: calc(50% - 37.5px);
+  display: flex;
+  align-items: center;
+
+  padding-right: 1rem;
+  justify-content: flex-end;
+}
+
+.party-side:last-child {
+  padding-left: 1rem;
+  justify-content: flex-start;
+}
+
+.summoner {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+  text-align: center;
+
+  background-color: var(--background2);
+  border-radius: 10px;
+  padding: 10px 10px;
+}
+
+.summoner .text-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-left: 8px;
+}
+
+.summoner .info-title {
+  color: var(--yellow);
+}
+
+.summoner .player-name {
+  color: var(--yellow);
+}
+
+.hand-shake-container {
+  font-size: 52px;
+  overflow: hidden;
+  display: flex;
+  width: 75px;
+  height: 75px;
+  justify-content: center;
+  align-items: center;
+}
