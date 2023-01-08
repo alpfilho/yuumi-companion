@@ -4,6 +4,7 @@
   border-radius: 10px;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.33);
   overflow: hidden;
+  background-color: var(--background3);
 }
 
 .summoner-avatar img {

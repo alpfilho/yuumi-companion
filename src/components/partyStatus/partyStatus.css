@@ -24,37 +24,58 @@
 .summoner {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: flex-end;
   align-content: center;
   text-align: center;
 
+  min-width: 200px;
   background-color: var(--background2);
   border-radius: 10px;
-  padding: 10px 10px;
+  padding: 10px;
+}
+
+.party-side:last-child .summoner {
+  justify-content: flex-start;
 }
 
 .summoner .text-container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  align-items: flex-end;
+  justify-content: center;
+  padding-right: 8px;
+}
+
+.summoner .text-container .info-text {
+  font-weight: 700;
+}
+
+.party-side:last-child .summoner .text-container {
   align-items: flex-start;
   padding-left: 8px;
 }
 
-.summoner .info-title {
-  color: var(--yellow);
+.summoner .player-title {
+  color: var(--cyan);
 }
 
-.summoner .player-name {
-  color: var(--yellow);
+.summoner .yuumi-title {
+  color: var(--magenta);
 }
 
 .hand-shake-container {
-  font-size: 52px;
+  font-size: 42px;
   overflow: hidden;
-  display: flex;
   width: 75px;
   height: 75px;
+}
+
+.hand-shake-container .icon-container {
+  width: 100%;
+  height: 100%;
+  background-color: var(--background2);
+  border-radius: 50%;
+  display: flex;
   justify-content: center;
   align-items: center;
 }

@@ -1,11 +1,12 @@
 import { useAtomValue } from "jotai";
 import React, { FC, useEffect } from "react";
-import { yuumiAccountInfoAtom, playerAccountInfoAtom } from "../../app.atoms";
+import { yuumiAccountInfoAtom, playerAccountInfoAtom, yuumiStatusAtom } from "../../app.atoms";
 import { SummonerAvatar } from "../summonerAvatar";
 
 import "./partyStatus.css";
 
 export const PartyStatus: FC = () => {
+  const yuumiStatus = useAtomValue(yuumiStatusAtom);
   const playerAccount = useAtomValue(playerAccountInfoAtom);
   const yuumiAccount = useAtomValue(yuumiAccountInfoAtom);
 
@@ -13,33 +14,37 @@ export const PartyStatus: FC = () => {
     console.log(playerAccount, yuumiAccount);
   }, [playerAccount, yuumiAccount]);
 
-  return (
-    <div className="party-status">
-      <div className="party-side">
-        {playerAccount ? (
+  if (playerAccount || yuumiAccount) {
+    return (
+      <div className="party-status">
+        <div className="party-side">
           <div className="summoner">
+            <div className="body1 text-container">
+              <div className="player-title">Player:</div>
+              <div className={`info-text ${playerAccount ? "status-success" : "status-idle"}`}>{playerAccount.name}</div>
+            </div>
             <SummonerAvatar path={playerAccount.profile} />
-            <div className="body1 text-container">
-              <div className="player-name">Player:</div>
-              <div className="info-text">{playerAccount.name}</div>
-            </div>
           </div>
-        ) : null}
-      </div>
+        </div>
 
-      <div className="hand-shake-container">🤝</div>
+        <div className="hand-shake-container">
+          <div className="icon-container">🤝</div>
+        </div>
 
-      <div className="party-side">
-        {yuumiAccount ? (
+        <div className="party-side">
           <div className="summoner">
-            <SummonerAvatar path={yuumiAccount.profile} />
+            <SummonerAvatar path={yuumiAccount ? yuumiAccount.profile : null} />
             <div className="body1 text-container">
-              <div className="player-name">Bot:</div>
-              <div className="info-text">{yuumiAccount.name}</div>
+              <div className="yuumi-title">Bot:</div>
+              <div className={`info-text ${yuumiAccount ? "status-info" : "status-idle"}`}>
+                {yuumiAccount ? yuumiAccount.name : "Aguardando Yuumi"}
+              </div>
             </div>
           </div>
-        ) : null}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 };

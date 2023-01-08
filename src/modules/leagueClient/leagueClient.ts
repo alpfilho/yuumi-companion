@@ -51,8 +51,11 @@ export class LeagueClientController {
               "base64"
             )}`,
           },
-        }).then((response) => resolve(response.json() as Promise<DataType>));
+        }).then((response) => {
+          resolve(response.json() as Promise<DataType>);
+        });
       } catch (error) {
+        console.log(error);
         reject(error);
       }
     });
@@ -60,21 +63,23 @@ export class LeagueClientController {
 
   private async getAccountInfo() {
     try {
-      const {
-        summonerId,
-        displayName: summonerName,
-        profileIconId,
-      } = await this.fetchClient<{
-        displayName: string;
-        summonerId: number;
-        profileIconId: number;
-      }>("/lol-summoner/v1/current-summoner");
+      setTimeout(async () => {
+        const {
+          summonerId,
+          displayName: summonerName,
+          profileIconId,
+        } = await this.fetchClient<{
+          displayName: string;
+          summonerId: number;
+          profileIconId: number;
+        }>("/lol-summoner/v1/current-summoner");
 
-      this.setAccountInfo({
-        id: summonerId,
-        name: summonerName,
-        profile: this.dataDragon.getProfilePath(profileIconId),
-      });
+        this.setAccountInfo({
+          id: summonerId,
+          name: summonerName,
+          profile: this.dataDragon.getProfilePath(profileIconId),
+        });
+      }, 10000);
     } catch (error) {
       console.log(error);
       this.setAccountInfo(null);

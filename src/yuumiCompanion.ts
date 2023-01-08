@@ -134,8 +134,6 @@ export class YuumiCompanion {
   private onChangeRole() {
     if (this.role === "player") {
       this.startListeningToYuumi();
-
-      this.playerAccountInfo = this.clientAccountInfo;
     }
 
     if (this.role === "yuumi") {
@@ -153,11 +151,9 @@ export class YuumiCompanion {
 
       this.setYuumiStatus("notFound");
       this.setPlayerStatus("notFound");
-
-      this.playerAccountInfo = null;
-      this.yuumiAccountInfo = null;
     }
 
+    this.setAccountInfo();
     this.updateFrontEnd();
   }
 
